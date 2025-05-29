@@ -80,7 +80,11 @@ export class MyMCP extends McpAgent {
 			"authenticate",
 			{
 				description: "Authenticate with ChargeNET API to get access token",
-				inputSchema: z.object({}),
+				inputSchema: {
+					type: "object",
+					properties: {},
+					required: []
+				},
 			},
 			async () => {
 				try {
@@ -166,7 +170,11 @@ export class MyMCP extends McpAgent {
 			"list_tools",
 			{
 				description: "List all available ChargeNET API tools",
-				inputSchema: z.object({}),
+				inputSchema: {
+					type: "object",
+					properties: {},
+					required: []
+				},
 			},
 			async () => ({
 				content: [
@@ -332,7 +340,11 @@ export class MyMCP extends McpAgent {
 			"logout",
 			{
 				description: "Logout from ChargeNET API",
-				inputSchema: z.object({}),
+				inputSchema: {
+					type: "object",
+					properties: {},
+					required: []
+				},
 			},
 			async () => {
 				try {
@@ -398,7 +410,11 @@ export class MyMCP extends McpAgent {
 			"get_charge_points",
 			{
 				description: "Get all charge points",
-				inputSchema: z.object({}),
+				inputSchema: {
+					type: "object",
+					properties: {},
+					required: []
+				},
 			},
 			async () => {
 				try {
@@ -430,9 +446,16 @@ export class MyMCP extends McpAgent {
 			"get_charge_point_by_id",
 			{
 				description: "Get details of a specific charge point by ID",
-				inputSchema: z.object({
-					chargePointId: z.number().describe("ID of the charge point"),
-				}),
+				inputSchema: {
+					type: "object",
+					properties: {
+						chargePointId: {
+							type: "number",
+							description: "ID of the charge point"
+						}
+					},
+					required: ["chargePointId"]
+				},
 			},
 			async (args) => {
 				try {
@@ -465,9 +488,16 @@ export class MyMCP extends McpAgent {
 			"get_charge_points_by_company",
 			{
 				description: "Get charge points for a specific company",
-				inputSchema: z.object({
-					companyId: z.number().describe("ID of the company"),
-				}),
+				inputSchema: {
+					type: "object",
+					properties: {
+						companyId: {
+							type: "number",
+							description: "ID of the company"
+						}
+					},
+					required: ["companyId"]
+				},
 			},
 			async (args) => {
 				try {
@@ -500,7 +530,11 @@ export class MyMCP extends McpAgent {
 			"get_charge_points_for_user",
 			{
 				description: "Get charge points accessible to authenticated user",
-				inputSchema: z.object({}),
+				inputSchema: {
+					type: "object",
+					properties: {},
+					required: []
+				},
 			},
 			async () => {
 				try {
@@ -533,9 +567,16 @@ export class MyMCP extends McpAgent {
 			"get_charge_sessions_by_user",
 			{
 				description: "Get charge sessions for a specific user",
-				inputSchema: z.object({
-					userId: z.number().describe("ID of the user"),
-				}),
+				inputSchema: {
+					type: "object",
+					properties: {
+						userId: {
+							type: "number",
+							description: "ID of the user"
+						}
+					},
+					required: ["userId"]
+				},
 			},
 			async (args) => {
 				try {
@@ -568,9 +609,16 @@ export class MyMCP extends McpAgent {
 			"get_ongoing_session",
 			{
 				description: "Get ongoing charge session for a user",
-				inputSchema: z.object({
-					userId: z.number().describe("ID of the user"),
-				}),
+				inputSchema: {
+					type: "object",
+					properties: {
+						userId: {
+							type: "number",
+							description: "ID of the user"
+						}
+					},
+					required: ["userId"]
+				},
 			},
 			async (args) => {
 				try {
@@ -603,12 +651,28 @@ export class MyMCP extends McpAgent {
 			"start_charge_session",
 			{
 				description: "Start a new charge session",
-				inputSchema: z.object({
-					chargerReference: z.string().describe("Charger reference"),
-					evsePortId: z.number().describe("EVSE port ID"),
-					connectorPortId: z.number().describe("Connector port ID"),
-					userId: z.number().optional().describe("User ID (optional)"),
-				}),
+				inputSchema: {
+					type: "object",
+					properties: {
+						chargerReference: {
+							type: "string",
+							description: "Charger reference"
+						},
+						evsePortId: {
+							type: "number",
+							description: "EVSE port ID"
+						},
+						connectorPortId: {
+							type: "number",
+							description: "Connector port ID"
+						},
+						userId: {
+							type: "number",
+							description: "User ID (optional)"
+						}
+					},
+					required: ["chargerReference", "evsePortId", "connectorPortId"]
+				},
 			},
 			async (args) => {
 				try {
@@ -651,12 +715,28 @@ export class MyMCP extends McpAgent {
 			"stop_charge_session",
 			{
 				description: "Stop a charge session",
-				inputSchema: z.object({
-					sessionId: z.string().describe("Session ID"),
-					chargerReference: z.string().describe("Charger reference"),
-					evsePortId: z.number().describe("EVSE port ID"),
-					connectorPortId: z.number().describe("Connector port ID"),
-				}),
+				inputSchema: {
+					type: "object",
+					properties: {
+						sessionId: {
+							type: "string",
+							description: "Session ID"
+						},
+						chargerReference: {
+							type: "string",
+							description: "Charger reference"
+						},
+						evsePortId: {
+							type: "number",
+							description: "EVSE port ID"
+						},
+						connectorPortId: {
+							type: "number",
+							description: "Connector port ID"
+						}
+					},
+					required: ["sessionId", "chargerReference", "evsePortId", "connectorPortId"]
+				},
 			},
 			async (args) => {
 				try {
@@ -700,7 +780,11 @@ export class MyMCP extends McpAgent {
 			"get_companies",
 			{
 				description: "Get all companies",
-				inputSchema: z.object({}),
+				inputSchema: {
+					type: "object",
+					properties: {},
+					required: []
+				},
 			},
 			async () => {
 				try {
@@ -732,9 +816,16 @@ export class MyMCP extends McpAgent {
 			"get_company_by_id",
 			{
 				description: "Get details of a specific company by ID",
-				inputSchema: z.object({
-					companyId: z.number().describe("ID of the company"),
-				}),
+				inputSchema: {
+					type: "object",
+					properties: {
+						companyId: {
+							type: "number",
+							description: "ID of the company"
+						}
+					},
+					required: ["companyId"]
+				},
 			},
 			async (args) => {
 				try {
@@ -768,7 +859,11 @@ export class MyMCP extends McpAgent {
 			"get_locations",
 			{
 				description: "Get all locations",
-				inputSchema: z.object({}),
+				inputSchema: {
+					type: "object",
+					properties: {},
+					required: []
+				},
 			},
 			async () => {
 				try {
@@ -800,9 +895,16 @@ export class MyMCP extends McpAgent {
 			"get_location_by_id",
 			{
 				description: "Get details of a specific location by ID",
-				inputSchema: z.object({
-					locationId: z.number().describe("ID of the location"),
-				}),
+				inputSchema: {
+					type: "object",
+					properties: {
+						locationId: {
+							type: "number",
+							description: "ID of the location"
+						}
+					},
+					required: ["locationId"]
+				},
 			},
 			async (args) => {
 				try {
@@ -835,9 +937,16 @@ export class MyMCP extends McpAgent {
 			"get_locations_by_company",
 			{
 				description: "Get locations for a specific company",
-				inputSchema: z.object({
-					companyId: z.number().describe("ID of the company"),
-				}),
+				inputSchema: {
+					type: "object",
+					properties: {
+						companyId: {
+							type: "number",
+							description: "ID of the company"
+						}
+					},
+					required: ["companyId"]
+				},
 			},
 			async (args) => {
 				try {
@@ -871,9 +980,16 @@ export class MyMCP extends McpAgent {
 			"get_dashboard_home",
 			{
 				description: "Get dashboard home data for a user",
-				inputSchema: z.object({
-					userId: z.number().describe("ID of the user"),
-				}),
+				inputSchema: {
+					type: "object",
+					properties: {
+						userId: {
+							type: "number",
+							description: "ID of the user"
+						}
+					},
+					required: ["userId"]
+				},
 			},
 			async (args) => {
 				try {
@@ -906,9 +1022,16 @@ export class MyMCP extends McpAgent {
 			"get_session_summary",
 			{
 				description: "Get session summary for a user",
-				inputSchema: z.object({
-					userId: z.number().describe("ID of the user"),
-				}),
+				inputSchema: {
+					type: "object",
+					properties: {
+						userId: {
+							type: "number",
+							description: "ID of the user"
+						}
+					},
+					required: ["userId"]
+				},
 			},
 			async (args) => {
 				try {
