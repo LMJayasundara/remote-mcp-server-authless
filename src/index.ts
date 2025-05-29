@@ -75,17 +75,32 @@ export class MyMCP extends McpAgent {
 	private userId: number | null = null;
 
 	async init() {
+		// Helper method to make authenticated requests
+		const makeAuthenticatedRequest = async (endpoint: string, options: RequestInit = {}) => {
+			if (!this.accessToken) {
+				throw new Error("Not authenticated. Please call authenticate tool first.");
+			}
+
+			const response = await fetch(`${this.API_BASE_URL}${endpoint}`, {
+				...options,
+				headers: {
+					'Authorization': `Bearer ${this.accessToken}`,
+					'Content-Type': 'application/json',
+					...options.headers,
+				},
+			});
+
+			if (!response.ok) {
+				throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+			}
+
+			return response.json();
+		};
+
 		// Authentication method
 		this.server.tool(
 			"authenticate",
-			{
-				description: "Authenticate with ChargeNET API to get access token",
-				inputSchema: {
-					type: "object",
-					properties: {},
-					required: []
-				},
-			},
+			{},
 			async () => {
 				try {
 					const response = await fetch(`${this.API_BASE_URL}/api/Account/Login`, {
@@ -143,209 +158,10 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
-		// Helper method to make authenticated requests
-		const makeAuthenticatedRequest = async (endpoint: string, options: RequestInit = {}) => {
-			if (!this.accessToken) {
-				throw new Error("Not authenticated. Please call authenticate tool first.");
-			}
-
-			const response = await fetch(`${this.API_BASE_URL}${endpoint}`, {
-				...options,
-				headers: {
-					'Authorization': `Bearer ${this.accessToken}`,
-					'Content-Type': 'application/json',
-					...options.headers,
-				},
-			});
-
-			if (!response.ok) {
-				throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-			}
-
-			return response.json();
-		};
-
-		// Tool to list all available tools
-		this.server.tool(
-			"list_tools",
-			{
-				description: "List all available ChargeNET API tools",
-				inputSchema: {
-					type: "object",
-					properties: {},
-					required: []
-				},
-			},
-			async () => ({
-				content: [
-					{
-						type: "text",
-						text: JSON.stringify({
-							available_tools: [
-								{
-									name: "authenticate",
-									description: "Authenticate with ChargeNET API to get access token"
-								},
-								// Account Management
-								{
-									name: "logout",
-									description: "Logout from ChargeNET API"
-								},
-								// Charge Points
-								{
-									name: "get_charge_points",
-									description: "Get all charge points"
-								},
-								{
-									name: "get_charge_point_by_id",
-									description: "Get details of a specific charge point by ID",
-									parameters: {
-										chargePointId: "number - ID of the charge point"
-									}
-								},
-								{
-									name: "get_charge_points_by_company",
-									description: "Get charge points for a specific company",
-									parameters: {
-										companyId: "number - ID of the company"
-									}
-								},
-								{
-									name: "get_charge_points_for_user",
-									description: "Get charge points accessible to authenticated user"
-								},
-								{
-									name: "create_charge_point",
-									description: "Create a new charge point",
-									parameters: {
-										reference: "string - Charge point reference",
-										name: "string - Charge point name",
-										description: "string - Description (optional)",
-										latitude: "number - Latitude (optional)",
-										longitude: "number - Longitude (optional)",
-										companyId: "number - Company ID (optional)",
-										locationId: "number - Location ID (optional)"
-									}
-								},
-								// Charge Sessions
-								{
-									name: "get_charge_sessions_by_user",
-									description: "Get charge sessions for a specific user",
-									parameters: {
-										userId: "number - ID of the user"
-									}
-								},
-								{
-									name: "get_ongoing_session",
-									description: "Get ongoing charge session for a user",
-									parameters: {
-										userId: "number - ID of the user"
-									}
-								},
-								{
-									name: "start_charge_session",
-									description: "Start a new charge session",
-									parameters: {
-										chargerReference: "string - Charger reference",
-										evsePortId: "number - EVSE port ID",
-										connectorPortId: "number - Connector port ID",
-										userId: "number - User ID (optional)"
-									}
-								},
-								{
-									name: "stop_charge_session",
-									description: "Stop a charge session",
-									parameters: {
-										sessionId: "string - Session ID",
-										chargerReference: "string - Charger reference",
-										evsePortId: "number - EVSE port ID",
-										connectorPortId: "number - Connector port ID"
-									}
-								},
-								// Companies
-								{
-									name: "get_companies",
-									description: "Get all companies"
-								},
-								{
-									name: "get_company_by_id",
-									description: "Get details of a specific company by ID",
-									parameters: {
-										companyId: "number - ID of the company"
-									}
-								},
-								{
-									name: "create_company",
-									description: "Create a new company",
-									parameters: {
-										companyName: "string - Company name",
-										description: "string - Company description (optional)"
-									}
-								},
-								// Locations
-								{
-									name: "get_locations",
-									description: "Get all locations"
-								},
-								{
-									name: "get_location_by_id",
-									description: "Get details of a specific location by ID",
-									parameters: {
-										locationId: "number - ID of the location"
-									}
-								},
-								{
-									name: "get_locations_by_company",
-									description: "Get locations for a specific company",
-									parameters: {
-										companyId: "number - ID of the company"
-									}
-								},
-								{
-									name: "create_location",
-									description: "Create a new location",
-									parameters: {
-										locationName: "string - Location name",
-										address: "string - Address (optional)",
-										city: "string - City (optional)",
-										country: "string - Country (optional)",
-										latitude: "number - Latitude (optional)",
-										longitude: "number - Longitude (optional)"
-									}
-								},
-								// Dashboard
-								{
-									name: "get_dashboard_home",
-									description: "Get dashboard home data for a user",
-									parameters: {
-										userId: "number - ID of the user"
-									}
-								},
-								{
-									name: "get_session_summary",
-									description: "Get session summary for a user",
-									parameters: {
-										userId: "number - ID of the user"
-									}
-								}
-							]
-						}, null, 2)
-					}
-				]
-			})
-		);
-
-		// Account Management Tools
+		// Logout tool
 		this.server.tool(
 			"logout",
-			{
-				description: "Logout from ChargeNET API",
-				inputSchema: {
-					type: "object",
-					properties: {},
-					required: []
-				},
-			},
+			{},
 			async () => {
 				try {
 					if (!this.accessToken) {
@@ -405,17 +221,10 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
-		// Charge Point Tools
+		// Get all charge points
 		this.server.tool(
 			"get_charge_points",
-			{
-				description: "Get all charge points",
-				inputSchema: {
-					type: "object",
-					properties: {},
-					required: []
-				},
-			},
+			{},
 			async () => {
 				try {
 					const data = await makeAuthenticatedRequest('/api/ChargePoint/GetAll');
@@ -442,24 +251,12 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
+		// Get charge point by ID
 		this.server.tool(
 			"get_charge_point_by_id",
-			{
-				description: "Get details of a specific charge point by ID",
-				inputSchema: {
-					type: "object",
-					properties: {
-						chargePointId: {
-							type: "number",
-							description: "ID of the charge point"
-						}
-					},
-					required: ["chargePointId"]
-				},
-			},
-			async (args) => {
+			{ chargePointId: z.number() },
+			async ({ chargePointId }) => {
 				try {
-					const { chargePointId } = args;
 					const data = await makeAuthenticatedRequest(`/api/ChargePoint/GetChargePoint/ById/${chargePointId}`);
 					return {
 						content: [
@@ -484,24 +281,12 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
+		// Get charge points by company
 		this.server.tool(
 			"get_charge_points_by_company",
-			{
-				description: "Get charge points for a specific company",
-				inputSchema: {
-					type: "object",
-					properties: {
-						companyId: {
-							type: "number",
-							description: "ID of the company"
-						}
-					},
-					required: ["companyId"]
-				},
-			},
-			async (args) => {
+			{ companyId: z.number() },
+			async ({ companyId }) => {
 				try {
-					const { companyId } = args;
 					const data = await makeAuthenticatedRequest(`/api/ChargePoint/GetChargePoint/ByCompany/${companyId}`);
 					return {
 						content: [
@@ -526,16 +311,10 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
+		// Get charge points for user
 		this.server.tool(
 			"get_charge_points_for_user",
-			{
-				description: "Get charge points accessible to authenticated user",
-				inputSchema: {
-					type: "object",
-					properties: {},
-					required: []
-				},
-			},
+			{},
 			async () => {
 				try {
 					const data = await makeAuthenticatedRequest('/api/ChargePoint/GetChargePoints/ForUser');
@@ -562,25 +341,12 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
-		// Charge Session Tools
+		// Get charge sessions by user
 		this.server.tool(
 			"get_charge_sessions_by_user",
-			{
-				description: "Get charge sessions for a specific user",
-				inputSchema: {
-					type: "object",
-					properties: {
-						userId: {
-							type: "number",
-							description: "ID of the user"
-						}
-					},
-					required: ["userId"]
-				},
-			},
-			async (args) => {
+			{ userId: z.number() },
+			async ({ userId }) => {
 				try {
-					const { userId } = args;
 					const data = await makeAuthenticatedRequest(`/api/ChargeSession/GetSessions/ByUser/${userId}`);
 					return {
 						content: [
@@ -605,24 +371,12 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
+		// Get ongoing session
 		this.server.tool(
 			"get_ongoing_session",
-			{
-				description: "Get ongoing charge session for a user",
-				inputSchema: {
-					type: "object",
-					properties: {
-						userId: {
-							type: "number",
-							description: "ID of the user"
-						}
-					},
-					required: ["userId"]
-				},
-			},
-			async (args) => {
+			{ userId: z.number() },
+			async ({ userId }) => {
 				try {
-					const { userId } = args;
 					const data = await makeAuthenticatedRequest(`/api/ChargeSession/GetOngoingSession/${userId}`);
 					return {
 						content: [
@@ -647,40 +401,22 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
+		// Start charge session
 		this.server.tool(
 			"start_charge_session",
 			{
-				description: "Start a new charge session",
-				inputSchema: {
-					type: "object",
-					properties: {
-						chargerReference: {
-							type: "string",
-							description: "Charger reference"
-						},
-						evsePortId: {
-							type: "number",
-							description: "EVSE port ID"
-						},
-						connectorPortId: {
-							type: "number",
-							description: "Connector port ID"
-						},
-						userId: {
-							type: "number",
-							description: "User ID (optional)"
-						}
-					},
-					required: ["chargerReference", "evsePortId", "connectorPortId"]
-				},
+				chargerReference: z.string(),
+				evsePortId: z.number(),
+				connectorPortId: z.number(),
+				userId: z.number().optional(),
 			},
-			async (args) => {
+			async ({ chargerReference, evsePortId, connectorPortId, userId }) => {
 				try {
 					const sessionData = {
-						userId: args.userId || this.userId,
-						chargerReference: args.chargerReference,
-						evsePortId: args.evsePortId,
-						connectorPortId: args.connectorPortId,
+						userId: userId || this.userId,
+						chargerReference,
+						evsePortId,
+						connectorPortId,
 					};
 
 					const data = await makeAuthenticatedRequest('/api/ChargeSession/Start', {
@@ -711,40 +447,22 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
+		// Stop charge session
 		this.server.tool(
 			"stop_charge_session",
 			{
-				description: "Stop a charge session",
-				inputSchema: {
-					type: "object",
-					properties: {
-						sessionId: {
-							type: "string",
-							description: "Session ID"
-						},
-						chargerReference: {
-							type: "string",
-							description: "Charger reference"
-						},
-						evsePortId: {
-							type: "number",
-							description: "EVSE port ID"
-						},
-						connectorPortId: {
-							type: "number",
-							description: "Connector port ID"
-						}
-					},
-					required: ["sessionId", "chargerReference", "evsePortId", "connectorPortId"]
-				},
+				sessionId: z.string(),
+				chargerReference: z.string(),
+				evsePortId: z.number(),
+				connectorPortId: z.number(),
 			},
-			async (args) => {
+			async ({ sessionId, chargerReference, evsePortId, connectorPortId }) => {
 				try {
 					const sessionData = {
-						sessionId: args.sessionId,
-						chargerReference: args.chargerReference,
-						evsePortId: args.evsePortId,
-						connectorPortId: args.connectorPortId,
+						sessionId,
+						chargerReference,
+						evsePortId,
+						connectorPortId,
 					};
 
 					const data = await makeAuthenticatedRequest('/api/ChargeSession/Stop', {
@@ -775,17 +493,10 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
-		// Company Tools
+		// Get all companies
 		this.server.tool(
 			"get_companies",
-			{
-				description: "Get all companies",
-				inputSchema: {
-					type: "object",
-					properties: {},
-					required: []
-				},
-			},
+			{},
 			async () => {
 				try {
 					const data = await makeAuthenticatedRequest('/api/Company/GetAll');
@@ -812,24 +523,12 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
+		// Get company by ID
 		this.server.tool(
 			"get_company_by_id",
-			{
-				description: "Get details of a specific company by ID",
-				inputSchema: {
-					type: "object",
-					properties: {
-						companyId: {
-							type: "number",
-							description: "ID of the company"
-						}
-					},
-					required: ["companyId"]
-				},
-			},
-			async (args) => {
+			{ companyId: z.number() },
+			async ({ companyId }) => {
 				try {
-					const { companyId } = args;
 					const data = await makeAuthenticatedRequest(`/api/Company/GetCompany/ById/${companyId}`);
 					return {
 						content: [
@@ -854,17 +553,10 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
-		// Location Tools
+		// Get all locations
 		this.server.tool(
 			"get_locations",
-			{
-				description: "Get all locations",
-				inputSchema: {
-					type: "object",
-					properties: {},
-					required: []
-				},
-			},
+			{},
 			async () => {
 				try {
 					const data = await makeAuthenticatedRequest('/api/Location/GetAll');
@@ -891,24 +583,12 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
+		// Get location by ID
 		this.server.tool(
 			"get_location_by_id",
-			{
-				description: "Get details of a specific location by ID",
-				inputSchema: {
-					type: "object",
-					properties: {
-						locationId: {
-							type: "number",
-							description: "ID of the location"
-						}
-					},
-					required: ["locationId"]
-				},
-			},
-			async (args) => {
+			{ locationId: z.number() },
+			async ({ locationId }) => {
 				try {
-					const { locationId } = args;
 					const data = await makeAuthenticatedRequest(`/api/Location/GetLocation/ById/${locationId}`);
 					return {
 						content: [
@@ -933,24 +613,12 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
+		// Get locations by company
 		this.server.tool(
 			"get_locations_by_company",
-			{
-				description: "Get locations for a specific company",
-				inputSchema: {
-					type: "object",
-					properties: {
-						companyId: {
-							type: "number",
-							description: "ID of the company"
-						}
-					},
-					required: ["companyId"]
-				},
-			},
-			async (args) => {
+			{ companyId: z.number() },
+			async ({ companyId }) => {
 				try {
-					const { companyId } = args;
 					const data = await makeAuthenticatedRequest(`/api/Location/GetLocations/ByCompany/${companyId}`);
 					return {
 						content: [
@@ -975,25 +643,12 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
-		// Dashboard Tools
+		// Get dashboard home data
 		this.server.tool(
 			"get_dashboard_home",
-			{
-				description: "Get dashboard home data for a user",
-				inputSchema: {
-					type: "object",
-					properties: {
-						userId: {
-							type: "number",
-							description: "ID of the user"
-						}
-					},
-					required: ["userId"]
-				},
-			},
-			async (args) => {
+			{ userId: z.number() },
+			async ({ userId }) => {
 				try {
-					const { userId } = args;
 					const data = await makeAuthenticatedRequest(`/api/Dashboard/Home/${userId}`);
 					return {
 						content: [
@@ -1018,24 +673,12 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
+		// Get session summary
 		this.server.tool(
 			"get_session_summary",
-			{
-				description: "Get session summary for a user",
-				inputSchema: {
-					type: "object",
-					properties: {
-						userId: {
-							type: "number",
-							description: "ID of the user"
-						}
-					},
-					required: ["userId"]
-				},
-			},
-			async (args) => {
+			{ userId: z.number() },
+			async ({ userId }) => {
 				try {
-					const { userId } = args;
 					const data = await makeAuthenticatedRequest(`/api/Dashboard/SessionSummary/${userId}`);
 					return {
 						content: [
