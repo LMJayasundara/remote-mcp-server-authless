@@ -9461,7 +9461,7 @@ interface GeneratedTool {
 }
 
 // Universal MCP Server that can work with any Swagger specification
-export class UniversalMCP extends McpAgent {
+export class MyMCP extends McpAgent {
   server = new McpServer({
     name: "Universal API MCP Server",
     version: "2.0.0",
@@ -10082,17 +10082,17 @@ ${config?.defaultBaseUrl ? `💡 Default Base URL: ${config.defaultBaseUrl}` : '
 }
 
 export default {
-  fetch(request: Request, env: Env, ctx: ExecutionContext) {
-    const url = new URL(request.url);
+	fetch(request: Request, env: Env, ctx: ExecutionContext) {
+		const url = new URL(request.url);
 
-    if (url.pathname === "/sse" || url.pathname === "/sse/message") {
-      return UniversalMCP.serveSSE("/sse").fetch(request, env, ctx);
-    }
+		if (url.pathname === "/sse" || url.pathname === "/sse/message") {
+			return MyMCP.serveSSE("/sse").fetch(request, env, ctx);
+		}
 
-    if (url.pathname === "/mcp") {
-      return UniversalMCP.serve("/mcp").fetch(request, env, ctx);
-    }
+		if (url.pathname === "/mcp") {
+			return MyMCP.serve("/mcp").fetch(request, env, ctx);
+		}
 
-    return new Response("Not found", { status: 404 });
-  },
+		return new Response("Not found", { status: 404 });
+	},
 };
