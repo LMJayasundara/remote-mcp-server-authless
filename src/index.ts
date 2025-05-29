@@ -103,23 +103,67 @@ export class MyMCP extends McpAgent {
 			{},
 			async () => {
 				try {
+					const loginPayload = {
+						username: this.USERNAME,
+						password: this.PASSWORD,
+						loginMode: this.LOGIN_MODE
+					} as LoginModel;
+
+					console.log(`Attempting to authenticate with URL: ${this.API_BASE_URL}/api/Account/Login`);
+					console.log(`Login payload:`, JSON.stringify(loginPayload, null, 2));
+
 					const response = await fetch(`${this.API_BASE_URL}/api/Account/Login`, {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json',
+							'Accept': 'application/json',
 						},
-						body: JSON.stringify({
-							username: this.USERNAME,
-							password: this.PASSWORD,
-							loginMode: this.LOGIN_MODE
-						} as LoginModel),
+						body: JSON.stringify(loginPayload),
 					});
 
+					console.log(`Authentication response status: ${response.status} ${response.statusText}`);
+					console.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
+
+					// Try to get response text regardless of status
+					const responseText = await response.text();
+					console.log(`Response body:`, responseText);
+
 					if (!response.ok) {
-						throw new Error(`Authentication failed: ${response.status} ${response.statusText}`);
+						return {
+							content: [
+								{
+									type: "text",
+									text: JSON.stringify({
+										success: false,
+										error: `Authentication failed: ${response.status} ${response.statusText}`,
+										details: responseText,
+										url: `${this.API_BASE_URL}/api/Account/Login`,
+										payload: loginPayload
+									}, null, 2)
+								}
+							]
+						};
 					}
 
-					const authData = await response.json() as AuthResponse;
+					// Try to parse as JSON
+					let authData: AuthResponse;
+					try {
+						authData = JSON.parse(responseText) as AuthResponse;
+					} catch (parseError) {
+						return {
+							content: [
+								{
+									type: "text",
+									text: JSON.stringify({
+										success: false,
+										error: "Failed to parse authentication response as JSON",
+										responseText: responseText,
+										parseError: parseError instanceof Error ? parseError.message : "Unknown parse error"
+									}, null, 2)
+								}
+							]
+						};
+					}
 					
 					if (authData.accessToken) {
 						this.accessToken = authData.accessToken;
@@ -133,15 +177,28 @@ export class MyMCP extends McpAgent {
 										success: true,
 										message: "Successfully authenticated with ChargeNET API",
 										userId: this.userId,
-										hasToken: !!this.accessToken
+										hasToken: !!this.accessToken,
+										tokenLength: this.accessToken.length
 									}, null, 2)
 								}
 							]
 						};
 					} else {
-						throw new Error("No access token received");
+						return {
+							content: [
+								{
+									type: "text",
+									text: JSON.stringify({
+										success: false,
+										error: "No access token received in response",
+										authResponse: authData
+									}, null, 2)
+								}
+							]
+						};
 					}
 				} catch (error) {
+					console.error('Authentication error:', error);
 					return {
 						content: [
 							{
@@ -149,7 +206,101 @@ export class MyMCP extends McpAgent {
 								text: JSON.stringify({
 									success: false,
 									error: error instanceof Error ? error.message : "Authentication failed",
-									message: "Failed to authenticate with ChargeNET API"
+									message: "Failed to authenticate with ChargeNET API",
+									errorType: error instanceof Error ? error.constructor.name : typeof error
+								}, null, 2)
+							}
+						]
+					};
+				}
+			}
+		);
+
+		// Test connectivity tool
+		this.server.tool(
+			"test_connectivity",
+			{},
+			async () => {
+				try {
+					console.log(`Testing connectivity to: ${this.API_BASE_URL}`);
+					
+					// Test base URL
+					const baseResponse = await fetch(this.API_BASE_URL, {
+						method: 'GET',
+						headers: {
+							'Accept': 'application/json',
+						},
+					});
+
+					console.log(`Base URL response: ${baseResponse.status} ${baseResponse.statusText}`);
+					const baseText = await baseResponse.text();
+					console.log(`Base response:`, baseText);
+
+					// Test if there's an API documentation endpoint
+					const possibleEndpoints = [
+						'/swagger',
+						'/api',
+						'/api/swagger',
+						'/swagger/index.html',
+						'/docs',
+						'/api/docs',
+						'/health',
+						'/ping'
+					];
+
+					const results = [];
+					for (const endpoint of possibleEndpoints) {
+						try {
+							const testResponse = await fetch(`${this.API_BASE_URL}${endpoint}`, {
+								method: 'GET',
+								headers: { 'Accept': 'application/json' },
+							});
+							results.push({
+								endpoint,
+								status: testResponse.status,
+								statusText: testResponse.statusText,
+								available: testResponse.ok
+							});
+						} catch (err) {
+							results.push({
+								endpoint,
+								error: err instanceof Error ? err.message : 'Unknown error',
+								available: false
+							});
+						}
+					}
+
+					return {
+						content: [
+							{
+								type: "text",
+								text: JSON.stringify({
+									baseUrl: this.API_BASE_URL,
+									baseResponse: {
+										status: baseResponse.status,
+										statusText: baseResponse.statusText,
+										body: baseText.substring(0, 500) + (baseText.length > 500 ? '...' : '')
+									},
+									endpointTests: results,
+									credentials: {
+										username: this.USERNAME,
+										loginMode: this.LOGIN_MODE,
+										passwordLength: this.PASSWORD.length
+									}
+								}, null, 2)
+							}
+						]
+					};
+				} catch (error) {
+					console.error('Connectivity test error:', error);
+					return {
+						content: [
+							{
+								type: "text",
+								text: JSON.stringify({
+									success: false,
+									error: error instanceof Error ? error.message : "Connectivity test failed",
+									errorType: error instanceof Error ? error.constructor.name : typeof error
 								}, null, 2)
 							}
 						]
