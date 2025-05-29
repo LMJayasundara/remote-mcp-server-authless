@@ -80,6 +80,7 @@ export class MyMCP extends McpAgent {
 			"authenticate",
 			{
 				description: "Authenticate with ChargeNET API to get access token",
+				inputSchema: z.object({}),
 			},
 			async () => {
 				try {
@@ -165,6 +166,7 @@ export class MyMCP extends McpAgent {
 			"list_tools",
 			{
 				description: "List all available ChargeNET API tools",
+				inputSchema: z.object({}),
 			},
 			async () => ({
 				content: [
@@ -330,6 +332,7 @@ export class MyMCP extends McpAgent {
 			"logout",
 			{
 				description: "Logout from ChargeNET API",
+				inputSchema: z.object({}),
 			},
 			async () => {
 				try {
@@ -395,6 +398,7 @@ export class MyMCP extends McpAgent {
 			"get_charge_points",
 			{
 				description: "Get all charge points",
+				inputSchema: z.object({}),
 			},
 			async () => {
 				try {
@@ -496,6 +500,7 @@ export class MyMCP extends McpAgent {
 			"get_charge_points_for_user",
 			{
 				description: "Get charge points accessible to authenticated user",
+				inputSchema: z.object({}),
 			},
 			async () => {
 				try {
@@ -695,6 +700,7 @@ export class MyMCP extends McpAgent {
 			"get_companies",
 			{
 				description: "Get all companies",
+				inputSchema: z.object({}),
 			},
 			async () => {
 				try {
@@ -762,6 +768,7 @@ export class MyMCP extends McpAgent {
 			"get_locations",
 			{
 				description: "Get all locations",
+				inputSchema: z.object({}),
 			},
 			async () => {
 				try {
