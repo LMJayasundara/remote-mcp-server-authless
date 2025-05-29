@@ -118,8 +118,8 @@ export const NAMING_CONVENTIONS = {
 }; 
 
 // Import swagger specifications directly
-import FakeRESTApiSpec from './swaggers/FakeRESTApi.json';
-import ChargeNETSpec from './swaggers/ChargeNET.json';
+import FakeRESTApiSpec from '../swaggers/FakeRESTApi.json';
+import ChargeNETSpec from '../swaggers/ChargeNET.json';
 
 // Interface for Swagger/OpenAPI specification
 interface SwaggerSpec {
