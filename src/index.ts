@@ -1,18 +1,7 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-
-// Define activity interface
-interface AuthTokenResponse {
-	isSuccess: boolean;
-  data: {
-    accessToken: string;
-    refreshToken: string;
-    tokenType: string;
-    createdOn: number;
-    expiresOn: number;
-  }
-}
+import { email } from "zod/v4";
 
 // Define our MCP agent with tools
 export class MyMCP extends McpAgent {
@@ -22,10 +11,9 @@ export class MyMCP extends McpAgent {
 	});
 
 	// Base URL for the API (you'll need to replace this with the actual API base URL)
-	private readonly API_BASE_URL = "http://52.13.222.102:11000"; // Replace with your actual API URL
-  private readonly USERNAME = "chgAdmin";
-  private readonly PASSWORD = "chgAdmin@123";
-  private readonly LOGIN_MODE = "WEB";
+	private readonly API_BASE_URL = "https://api.escuelajs.co"; // Replace with your actual API URL
+  private readonly EMAIL = "john@mail.com";
+  private readonly PASSWORD = "changeme";
 
 	async init() {
 		// Tool to list all available tools
@@ -59,71 +47,38 @@ export class MyMCP extends McpAgent {
 			{},
 			async () => {
 				try {
-					const url = `${this.API_BASE_URL}/api/Account/Login`;
-					const requestBody = {
-						"username": this.USERNAME,
-						"password": this.PASSWORD,
-						"loginMode": this.LOGIN_MODE
-					};
-
-					console.log('Making request to:', url);
-					console.log('Request body:', JSON.stringify(requestBody, null, 2));
-
-					const response = await fetch(url, {
+					const response = await fetch(`${this.API_BASE_URL}/api/v1/auth/login`, {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json'
 						},
-						body: JSON.stringify(requestBody)
+						body: JSON.stringify({
+							email: this.EMAIL,
+							password: this.PASSWORD,
+						})
 					});
 
-					console.log('Response status:', response.status);
-					console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-					const responseText = await response.text();
-					console.log('Raw response:', responseText);
-
 					if (!response.ok) {
-						return {
-							content: [
-								{
-									type: "text",
-									text: `HTTP error! status: ${response.status}, response: ${responseText}`
-								}
-							]
-						};
+						throw new Error(`HTTP error! status: ${response.status}`);
 					}
 
-					let data: AuthTokenResponse;
-					try {
-						data = JSON.parse(responseText) as AuthTokenResponse;
-					} catch (parseError) {
-						return {
-							content: [
-								{
-									type: "text",
-									text: `JSON parse error: ${parseError instanceof Error ? parseError.message : 'Unknown parse error'}. Raw response: ${responseText}`
-								}
-							]
-						};
-					}
+					const data = await response.json();
 					
 					return {
 						content: [
 							{
 								type: "text",
-								text: `Authentication successful! Token: ${data.data.accessToken}`
+								text: `Authentication token: ${data}`
 							}
 						]
 					};
 				} catch (error: unknown) {
 					const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-					console.error('Fetch error:', error);
 					return {
 						content: [
 							{
 								type: "text",
-								text: `Error making request: ${errorMessage}`
+								text: `Error fetching activities: ${errorMessage}`
 							}
 						]
 					};
