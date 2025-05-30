@@ -59,40 +59,71 @@ export class MyMCP extends McpAgent {
 			{},
 			async () => {
 				try {
-					const response = await fetch(`${this.API_BASE_URL}/api/Account/Login`, {
+					const url = `${this.API_BASE_URL}/api/Account/Login`;
+					const requestBody = {
+						username: this.USERNAME,
+						password: this.PASSWORD,
+						loginMode: this.LOGIN_MODE
+					};
+
+					console.log('Making request to:', url);
+					console.log('Request body:', JSON.stringify(requestBody, null, 2));
+
+					const response = await fetch(url, {
 						method: 'POST',
 						headers: {
-							'Accept': 'application/json',
 							'Content-Type': 'application/json'
 						},
-						body: JSON.stringify({
-							username: this.USERNAME,
-							password: this.PASSWORD,
-							loginMode: this.LOGIN_MODE
-						})
+						body: JSON.stringify(requestBody)
 					});
 
+					console.log('Response status:', response.status);
+					console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+					const responseText = await response.text();
+					console.log('Raw response:', responseText);
+
 					if (!response.ok) {
-						throw new Error(`HTTP error! status: ${response.status}`);
+						return {
+							content: [
+								{
+									type: "text",
+									text: `HTTP error! status: ${response.status}, response: ${responseText}`
+								}
+							]
+						};
 					}
 
-					const data = await response.json() as AuthTokenResponse;
+					let data: AuthTokenResponse;
+					try {
+						data = JSON.parse(responseText) as AuthTokenResponse;
+					} catch (parseError) {
+						return {
+							content: [
+								{
+									type: "text",
+									text: `JSON parse error: ${parseError instanceof Error ? parseError.message : 'Unknown parse error'}. Raw response: ${responseText}`
+								}
+							]
+						};
+					}
 					
 					return {
 						content: [
 							{
 								type: "text",
-								text: `Authentication token: ${data.data.accessToken}`
+								text: `Authentication successful! Token: ${data.data.accessToken}`
 							}
 						]
 					};
 				} catch (error: unknown) {
 					const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+					console.error('Fetch error:', error);
 					return {
 						content: [
 							{
 								type: "text",
-								text: `Error fetching activities: ${errorMessage}`
+								text: `Error making request: ${errorMessage}`
 							}
 						]
 					};
