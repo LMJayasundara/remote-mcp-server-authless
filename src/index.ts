@@ -62,13 +62,13 @@ export class MyMCP extends McpAgent {
 						throw new Error(`HTTP error! status: ${response.status}`);
 					}
 
-					const data = await response.json();
+					const data = await response.json() as object;
 					
 					return {
 						content: [
 							{
 								type: "text",
-								text: `Authentication token: ${data}`
+								text: `Authentication token: ${JSON.stringify(data)}`
 							}
 						]
 					};
