@@ -61,9 +61,9 @@ export class MyMCP extends McpAgent {
 				try {
 					const url = `${this.API_BASE_URL}/api/Account/Login`;
 					const requestBody = {
-						username: this.USERNAME,
-						password: this.PASSWORD,
-						loginMode: this.LOGIN_MODE
+						"username": this.USERNAME,
+						"password": this.PASSWORD,
+						"loginMode": this.LOGIN_MODE
 					};
 
 					console.log('Making request to:', url);
