@@ -6,14 +6,15 @@ import { email } from "zod/v4";
 // Define our MCP agent with tools
 export class MyMCP extends McpAgent {
 	server = new McpServer({
-		name: "Authless Calculator",
+		name: "ChargeNET MCP",
 		version: "1.0.0",
 	});
 
 	// Base URL for the API (you'll need to replace this with the actual API base URL)
-	private readonly API_BASE_URL = "https://api.escuelajs.co"; // Replace with your actual API URL
-  private readonly EMAIL = "john@mail.com";
-  private readonly PASSWORD = "changeme";
+	private readonly API_BASE_URL = "http://52.13.222.102:11000"; // Replace with your actual API URL
+  private readonly USERNAME = "chgAdmin";
+  private readonly PASSWORD = "chgAdmin@123";
+  private readonly LOGIN_MODE = "WEB";
 
 	async init() {
 		// Tool to list all available tools
@@ -47,14 +48,15 @@ export class MyMCP extends McpAgent {
 			{},
 			async () => {
 				try {
-					const response = await fetch(`${this.API_BASE_URL}/api/v1/auth/login`, {
+					const response = await fetch(`${this.API_BASE_URL}/api/Account/Login`, {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json'
 						},
 						body: JSON.stringify({
-							email: this.EMAIL,
+							username: this.USERNAME,
 							password: this.PASSWORD,
+              loginMode: this.LOGIN_MODE
 						})
 					});
 
