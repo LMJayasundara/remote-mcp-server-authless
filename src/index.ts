@@ -2,6 +2,7 @@ import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { email } from "zod/v4";
+import axios from "axios";
 
 // Define our MCP agent with tools
 export class MyMCP extends McpAgent {
@@ -48,35 +49,39 @@ export class MyMCP extends McpAgent {
       {},
       async () => {
         try {
-          const response = await fetch(`${this.API_BASE_URL}/api/Account/Login`, {
-            method: 'POST',
+          const response = await axios.post(`${this.API_BASE_URL}/api/Account/Login`, {
+            username: this.USERNAME,
+            password: this.PASSWORD,
+            loginMode: this.LOGIN_MODE
+          }, {
             headers: {
               'accept': '*/*',
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             },
-            body: JSON.stringify({
-              "username": this.USERNAME,
-              "password": this.PASSWORD,
-              "loginMode": this.LOGIN_MODE
-            })
+            timeout: 10000 // 10 second timeout
           });
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const data = await response.json() as object;
 
           return {
             content: [
               {
                 type: "text",
-                text: `Authentication token: ${JSON.stringify(data)}`
+                text: `Authentication token: ${JSON.stringify(response.data)}`
               }
             ]
           };
         } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+          let errorMessage = 'Unknown error occurred';
+          
+          if (axios.isAxiosError(error)) {
+            errorMessage = `HTTP error! status: ${error.response?.status}, message: ${error.message}`;
+            if (error.response?.data) {
+              errorMessage += `, response: ${JSON.stringify(error.response.data)}`;
+            }
+          } else if (error instanceof Error) {
+            errorMessage = error.message;
+          }
+          
           return {
             content: [
               {
