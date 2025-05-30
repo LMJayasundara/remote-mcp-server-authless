@@ -33,6 +33,14 @@ export class MyMCP extends McpAgent {
                   description: "Get an authentication token from the API"
                 },
                 {
+                  name: "get_auth_token_bypass",
+                  description: "Get an authentication token using bypass configuration"
+                },
+                {
+                  name: "get_auth_token_fetch",
+                  description: "Get an authentication token using raw fetch with minimal headers"
+                },
+                {
                   name: "list_tools",
                   description: "List all available tools and their descriptions"
                 }
@@ -55,9 +63,7 @@ export class MyMCP extends McpAgent {
             loginMode: this.LOGIN_MODE
           }, {
             headers: {
-              'accept': '*/*',
-              'Content-Type': 'application/json',
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+              'Content-Type': 'application/json'
             },
             timeout: 10000 // 10 second timeout
           });
@@ -87,6 +93,107 @@ export class MyMCP extends McpAgent {
               {
                 type: "text",
                 text: `Error fetching activities: ${errorMessage}`
+              }
+            ]
+          };
+        }
+      }
+    );
+
+    // Bypass method to get auth token with different configuration
+    this.server.tool(
+      "get_auth_token_bypass",
+      {},
+      async () => {
+        try {
+          // Create axios instance with custom configuration
+          const axiosInstance = axios.create({
+            baseURL: this.API_BASE_URL,
+            timeout: 15000,
+            validateStatus: () => true, // Accept any status code
+            headers: {
+              'Accept': 'application/json, text/plain, */*',
+              'Content-Type': 'application/json',
+              'User-Agent': 'axios/1.6.0',
+              'Accept-Encoding': 'gzip, compress, deflate, br',
+              'Accept-Language': 'en-US,en;q=0.9'
+            }
+          });
+
+          const response = await axiosInstance.post('/api/Account/Login', {
+            username: this.USERNAME,
+            password: this.PASSWORD,
+            loginMode: this.LOGIN_MODE
+          });
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Bypass response [Status: ${response.status}]: ${JSON.stringify(response.data)}`
+              }
+            ]
+          };
+        } catch (error: unknown) {
+          let errorMessage = 'Unknown error occurred';
+          
+          if (axios.isAxiosError(error)) {
+            errorMessage = `HTTP error! status: ${error.response?.status}, message: ${error.message}`;
+            if (error.response?.data) {
+              errorMessage += `, response: ${JSON.stringify(error.response.data)}`;
+            }
+          } else if (error instanceof Error) {
+            errorMessage = error.message;
+          }
+          
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error with bypass method: ${errorMessage}`
+              }
+            ]
+          };
+        }
+      }
+    );
+
+    // Raw fetch method with minimal headers
+    this.server.tool(
+      "get_auth_token_fetch",
+      {},
+      async () => {
+        try {
+          const response = await fetch(`${this.API_BASE_URL}/api/Account/Login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              username: this.USERNAME,
+              password: this.PASSWORD,
+              loginMode: this.LOGIN_MODE
+            })
+          });
+
+          const responseText = await response.text();
+          
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Fetch response [Status: ${response.status}]: ${responseText}`
+              }
+            ]
+          };
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+          
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error with fetch method: ${errorMessage}`
               }
             ]
           };
